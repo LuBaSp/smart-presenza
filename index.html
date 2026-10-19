@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Smart o Presenza</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lavoro">
+<meta name="theme-color" content="#F2F3F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101218" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" id="touchIcon" href="">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: una colonna stretta da telefono — data di oggi, due grandi tasti, riepilogo del mese, calendario. */
+:root {
+  --bg: #F2F3F7;
+  --surface: #FFFFFF;
+  --fg: #171923;
+  --muted: #6B7084;
+  --line: #E2E4EC;
+  --smart: #4F46E5;
+  --smart-soft: #E7E6FC;
+  --pres: #E07A1F;
+  --pres-soft: #FCEBDB;
+  --on-accent: #FFFFFF;
+  --shadow: 0 1px 2px rgba(23,25,35,.05), 0 8px 24px rgba(23,25,35,.06);
+  --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body: "Manrope", -apple-system, "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101218; --surface: #1A1D26; --fg: #EEF0F6; --muted: #8C91A6; --line: #2A2E3B;
+    --smart: #8B85FF; --smart-soft: #2A2850; --pres: #F59E4C; --pres-soft: #3D2A1A;
+    --on-accent: #101218;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body);
+  padding-top: max(20px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(28px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-font-smoothing: antialiased;
+}
+main { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--smart); outline-offset: 3px; }
+
+header { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; padding-top: 8px; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 800 34px/1.05 var(--display); margin: 4px 0 0; letter-spacing: -.02em; text-wrap: balance; }
+.week { font-size: 13px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.choice {
+  position: relative; aspect-ratio: 1 / 1.08; max-width: 100%; border-radius: 26px; padding: 18px;
+  background: var(--surface); box-shadow: var(--shadow);
+  display: flex; flex-direction: column; justify-content: space-between; text-align: left;
+  transition: transform .15s ease, background-color .25s ease, color .25s ease;
+}
+.choice:active { transform: scale(.97); }
+.choice svg { width: 44px; height: 44px; }
+.choice .name { font: 700 26px/1 var(--display); letter-spacing: -.01em; }
+.choice .hint { font-size: 12.5px; color: var(--muted); font-weight: 600; margin-top: 6px; transition: color .25s; }
+.choice[data-mode="smart"] svg { color: var(--smart); }
+.choice[data-mode="presenza"] svg { color: var(--pres); }
+.choice.on[data-mode="smart"] { background: var(--smart); color: var(--on-accent); }
+.choice.on[data-mode="presenza"] { background: var(--pres); color: var(--on-accent); }
+.choice.on svg, .choice.on .hint { color: var(--on-accent); }
+.choice .check {
+  position: absolute; top: 16px; right: 16px; width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--on-accent); opacity: 0; transform: scale(.5);
+  transition: opacity .2s, transform .25s cubic-bezier(.3,1.6,.5,1);
+}
+.choice .check svg { width: 14px; height: 14px; }
+.choice.on .check { opacity: 1; transform: none; }
+.choice.on[data-mode="smart"] .check svg { color: var(--smart); }
+.choice.on[data-mode="presenza"] .check svg { color: var(--pres); }
+
+.summary { display: flex; flex-direction: column; gap: 10px; }
+.summary-row { display: flex; justify-content: space-between; align-items: baseline; font-variant-numeric: tabular-nums; }
+.summary-row .lbl { font-weight: 700; font-size: 14px; }
+.legend { display: flex; gap: 14px; font-size: 13px; color: var(--muted); font-weight: 600; }
+.legend b { color: var(--fg); font-weight: 700; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+.dot.s { background: var(--smart); } .dot.p { background: var(--pres); }
+.bar { height: 8px; border-radius: 99px; background: var(--line); display: flex; overflow: hidden; }
+.bar span { transition: width .4s ease; }
+.bar .s { background: var(--smart); } .bar .p { background: var(--pres); }
+
+.cal { background: var(--surface); border-radius: 24px; padding: 16px 14px 14px; box-shadow: var(--shadow); }
+.cal-head { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 12px; }
+.cal-head h2 { font: 700 19px/1 var(--display); margin: 0; text-transform: capitalize; }
+.nav { display: flex; gap: 4px; }
+.nav button { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; color: var(--muted); }
+.nav button:active { background: var(--line); }
+.nav svg { width: 18px; height: 18px; }
+.grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.dow { text-align: center; font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--muted); padding-bottom: 4px; }
+.day {
+  aspect-ratio: 1; max-width: 100%; border-radius: 12px; display: grid; place-items: center;
+  font-weight: 600; font-size: 14px; font-variant-numeric: tabular-nums; position: relative;
+}
+.day.empty { pointer-events: none; }
+.day.we { color: var(--muted); opacity: .55; }
+.day.smart { background: var(--smart-soft); color: var(--smart); opacity: 1; font-weight: 800; }
+.day.presenza { background: var(--pres-soft); color: var(--pres); opacity: 1; font-weight: 800; }
+.day.today { box-shadow: inset 0 0 0 2px var(--fg); }
+.day.sel { box-shadow: inset 0 0 0 2px var(--muted); }
+.day:active { transform: scale(.92); }
+
+.editor {
+  display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 10px 10px 14px;
+  border-radius: 16px; background: var(--bg); flex-wrap: wrap;
+}
+.editor .when { flex: 1 1 120px; min-width: 0; font-weight: 700; font-size: 14px; }
+.editor button { padding: 8px 12px; border-radius: 11px; font-weight: 700; font-size: 13px; background: var(--surface); }
+.editor button.s { color: var(--smart); } .editor button.p { color: var(--pres); } .editor button.x { color: var(--muted); }
+.editor button.s.on { background: var(--smart); color: var(--on-accent); }
+.editor button.p.on { background: var(--pres); color: var(--on-accent); }
+
+footer { display: flex; justify-content: center; gap: 18px; font-size: 13px; color: var(--muted); }
+footer button { color: var(--muted); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+  background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 99px;
+  font-weight: 700; font-size: 14px; transition: opacity .2s, transform .25s; white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <div class="eyebrow">Oggi</div>
+      <h1 id="today"></h1>
+    </div>
+    <div class="week" id="week"></div>
+  </header>
+
+  <section class="choices" aria-label="Modalità di oggi">
+    <button class="choice" id="btnSmart" data-mode="smart" aria-pressed="false">
+      <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><rect x="9" y="13" width="6" height="4" rx="1"/></svg>
+      <div><div class="name">Smart</div><div class="hint" id="hintSmart">Da casa</div></div>
+    </button>
+    <button class="choice" id="btnPres" data-mode="presenza" aria-pressed="false">
+      <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h1.5M13.5 7H15M9 11h1.5M13.5 11H15M10.5 21v-4h3v4"/></svg>
+      <div><div class="name">Presenza</div><div class="hint" id="hintPres">In ufficio</div></div>
+    </button>
+  </section>
+
+  <section class="summary" aria-label="Riepilogo del mese">
+    <div class="summary-row">
+      <span class="lbl" id="sumTitle">Questo mese</span>
+      <span class="legend"><span><i class="dot s"></i><b id="cntS">0</b> smart</span><span><i class="dot p"></i><b id="cntP">0</b> presenza</span></span>
+    </div>
+    <div class="bar"><span class="s" id="barS" style="width:0"></span><span class="p" id="barP" style="width:0"></span></div>
+  </section>
+
+  <section class="cal" aria-label="Calendario">
+    <div class="cal-head">
+      <h2 id="monthLabel"></h2>
+      <div class="nav">
+        <button id="prev" aria-label="Mese precedente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <button id="next" aria-label="Mese successivo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="editor" id="editor" hidden>
+      <span class="when" id="editWhen"></span>
+      <button class="s" data-set="smart">Smart</button>
+      <button class="p" data-set="presenza">Presenza</button>
+      <button class="x" data-set="">Cancella</button>
+    </div>
+  </section>
+
+  <footer>
+    <button id="exportBtn">Esporta backup</button>
+    <button id="importBtn">Importa backup</button>
+    <input type="file" id="importFile" accept="application/json" hidden>
+  </footer>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const KEY = "smart-presenza-v1";
+const $ = id => document.getElementById(id);
+let data = {};
+try { data = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { data = {}; }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {} };
+
+const pad = n => String(n).padStart(2, "0");
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const fmtLong = d => d.toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" });
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+let now = new Date();
+let view = new Date(now.getFullYear(), now.getMonth(), 1);
+let selected = null;
+
+function isoWeek(d) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const y = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return Math.ceil(((t - y) / 864e5 + 1) / 7);
+}
+
+let toastT;
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 1600);
+}
+
+function setDay(key, mode) {
+  if (mode) data[key] = mode; else delete data[key];
+  save(); render();
+}
+
+function renderToday() {
+  now = new Date();
+  const k = iso(now), m = data[k];
+  $("today").textContent = cap(fmtLong(now));
+  $("week").textContent = `Settimana ${isoWeek(now)}`;
+  for (const [id, mode, hint, def] of [["btnSmart", "smart", "hintSmart", "Da casa"], ["btnPres", "presenza", "hintPres", "In ufficio"]]) {
+    const on = m === mode;
+    $(id).classList.toggle("on", on);
+    $(id).setAttribute("aria-pressed", on);
+    $(hint).textContent = on ? "Registrato oggi" : def;
+  }
+}
+
+function renderMonth() {
+  const y = view.getFullYear(), mo = view.getMonth();
+  $("monthLabel").textContent = view.toLocaleDateString("it-IT", { month: "long", year: "numeric" });
+  const isCurrent = y === now.getFullYear() && mo === now.getMonth();
+  $("sumTitle").textContent = isCurrent ? "Questo mese" : cap(view.toLocaleDateString("it-IT", { month: "long" }));
+
+  const g = $("grid"); g.innerHTML = "";
+  ["L", "M", "M", "G", "V", "S", "D"].forEach(l => { const e = document.createElement("div"); e.className = "dow"; e.textContent = l; g.appendChild(e); });
+  const offset = (new Date(y, mo, 1).getDay() + 6) % 7;
+  for (let i = 0; i < offset; i++) { const e = document.createElement("div"); e.className = "day empty"; g.appendChild(e); }
+
+  const days = new Date(y, mo + 1, 0).getDate();
+  const todayKey = iso(now);
+  let s = 0, p = 0;
+  for (let d = 1; d <= days; d++) {
+    const date = new Date(y, mo, d), k = iso(date), m = data[k];
+    if (m === "smart") s++; else if (m === "presenza") p++;
+    const b = document.createElement("button");
+    b.className = "day";
+    if (date.getDay() === 0 || date.getDay() === 6) b.classList.add("we");
+    if (m) b.classList.add(m);
+    if (k === todayKey) b.classList.add("today");
+    if (k === selected) b.classList.add("sel");
+    b.textContent = d;
+    b.setAttribute("aria-label", `${fmtLong(date)}${m ? ", " + m : ""}`);
+    b.onclick = () => { selected = selected === k ? null : k; render(); };
+    g.appendChild(b);
+  }
+  $("cntS").textContent = s; $("cntP").textContent = p;
+  const tot = s + p;
+  $("barS").style.width = tot ? (s / tot * 100) + "%" : "0";
+  $("barP").style.width = tot ? (p / tot * 100) + "%" : "0";
+
+  const ed = $("editor");
+  if (selected && selected.startsWith(`${y}-${pad(mo + 1)}`)) {
+    const [yy, mm, dd] = selected.split("-").map(Number);
+    $("editWhen").textContent = cap(fmtLong(new Date(yy, mm - 1, dd)));
+    ed.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.set && b.dataset.set === data[selected]));
+    ed.hidden = false;
+  } else ed.hidden = true;
+}
+
+function render() { renderToday(); renderMonth(); }
+
+document.querySelectorAll(".choice").forEach(btn => btn.onclick = () => {
+  const k = iso(new Date()), mode = btn.dataset.mode;
+  if (data[k] === mode) { setDay(k, null); toast("Registrazione rimossa"); }
+  else { setDay(k, mode); toast(mode === "smart" ? "Oggi: smart working" : "Oggi: in presenza"); if (navigator.vibrate) navigator.vibrate(12); }
+});
+$("editor").querySelectorAll("button").forEach(b => b.onclick = () => {
+  setDay(selected, b.dataset.set || null);
+  toast(b.dataset.set ? "Giorno aggiornato" : "Giorno cancellato");
+});
+$("prev").onclick = () => { view = new Date(view.getFullYear(), view.getMonth() - 1, 1); selected = null; render(); };
+$("next").onclick = () => { view = new Date(view.getFullYear(), view.getMonth() + 1, 1); selected = null; render(); };
+
+$("exportBtn").onclick = () => {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = `smart-presenza-${iso(new Date())}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+};
+$("importBtn").onclick = () => $("importFile").click();
+$("importFile").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const obj = JSON.parse(await f.text());
+    const ok = Object.entries(obj).filter(([k, v]) => /^\d{4}-\d{2}-\d{2}$/.test(k) && (v === "smart" || v === "presenza"));
+    ok.forEach(([k, v]) => data[k] = v);
+    save(); render(); toast(`Importati ${ok.length} giorni`);
+  } catch (err) { toast("File non valido: serve un backup .json"); }
+  e.target.value = "";
+};
+
+// Ricarica quando l'app torna in primo piano (es. il giorno dopo)
+document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
+
+// Icona per la schermata Home, disegnata al volo
+(function icon() {
+  const c = document.createElement("canvas"); c.width = c.height = 180;
+  const x = c.getContext("2d");
+  x.fillStyle = "#171923"; x.fillRect(0, 0, 180, 180);
+  x.fillStyle = "#4F46E5"; x.beginPath(); x.roundRect(28, 48, 58, 84, 16); x.fill();
+  x.fillStyle = "#E07A1F"; x.beginPath(); x.roundRect(94, 48, 58, 84, 16); x.fill();
+  $("touchIcon").href = c.toDataURL("image/png");
+})();
+
+render();
+</script>
+</body>
+</html>
