@@ -26,6 +26,8 @@
   --smart-soft: #E7E6FC;
   --pres: #E07A1F;
   --pres-soft: #FCEBDB;
+  --trip: #0D8574;
+  --trip-soft: #D7F0EB;
   --on-accent: #FFFFFF;
   --shadow: 0 1px 2px rgba(23,25,35,.05), 0 8px 24px rgba(23,25,35,.06);
   --display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
@@ -36,12 +38,14 @@
   :root {
     --bg: #101218; --surface: #1A1D26; --fg: #EEF0F6; --muted: #8C91A6; --line: #2A2E3B;
     --smart: #8B85FF; --smart-soft: #2A2850; --pres: #F59E4C; --pres-soft: #3D2A1A;
+    --trip: #2EC4AE; --trip-soft: #13383A;
     --on-accent: #101218;
     --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
     color-scheme: dark;
   }
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
 html, body { margin: 0; min-height: 100%; }
 body {
   background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body);
@@ -86,16 +90,35 @@ h1 { font: 800 34px/1.05 var(--display); margin: 4px 0 0; letter-spacing: -.02em
 .choice.on[data-mode="smart"] .check svg { color: var(--smart); }
 .choice.on[data-mode="presenza"] .check svg { color: var(--pres); }
 
+/* Trasferta: barra bassa sotto i due tasti; Italia/Estero compare solo quando è attiva */
+.trip {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: 6px;
+  border-radius: 18px; background: var(--surface); box-shadow: var(--shadow);
+  transition: background-color .25s ease, color .25s ease;
+}
+.trip-btn { flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 10px; text-align: left; transition: transform .15s ease; }
+.trip-btn:active { transform: scale(.98); }
+.trip-btn svg { width: 22px; height: 22px; flex: none; color: var(--trip); }
+.trip-btn .name { font: 700 17px/1 var(--display); }
+.trip-btn .hint { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.trip.on { background: var(--trip); color: var(--on-accent); }
+.trip.on .trip-btn svg { color: var(--on-accent); }
+.trip-kind { display: flex; padding: 3px; border-radius: 12px; background: color-mix(in srgb, var(--on-accent) 22%, transparent); }
+.trip-kind button { padding: 7px 12px; border-radius: 9px; font-weight: 700; font-size: 13px; color: var(--on-accent); }
+.trip-kind button.on { background: var(--on-accent); color: var(--trip); }
+
 .summary { display: flex; flex-direction: column; gap: 10px; }
 .summary-row { display: flex; justify-content: space-between; align-items: baseline; font-variant-numeric: tabular-nums; }
 .summary-row .lbl { font-weight: 700; font-size: 14px; }
 .legend { display: flex; gap: 14px; font-size: 13px; color: var(--muted); font-weight: 600; }
 .legend b { color: var(--fg); font-weight: 700; }
 .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
-.dot.s { background: var(--smart); } .dot.p { background: var(--pres); }
+.dot.s { background: var(--smart); } .dot.p { background: var(--pres); } .dot.t { background: var(--trip); }
 .bar { height: 8px; border-radius: 99px; background: var(--line); display: flex; overflow: hidden; }
 .bar span { transition: width .4s ease; }
-.bar .s { background: var(--smart); } .bar .p { background: var(--pres); }
+.bar .s { background: var(--smart); } .bar .p { background: var(--pres); } .bar .t { background: var(--trip); }
+.trip-sum { font-size: 13px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+.trip-sum b { color: var(--fg); font-weight: 700; }
 
 .cal { background: var(--surface); border-radius: 24px; padding: 16px 14px 14px; box-shadow: var(--shadow); }
 .cal-head { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 12px; }
@@ -114,6 +137,8 @@ h1 { font: 800 34px/1.05 var(--display); margin: 4px 0 0; letter-spacing: -.02em
 .day.we { color: var(--muted); opacity: .55; }
 .day.smart { background: var(--smart-soft); color: var(--smart); opacity: 1; font-weight: 800; }
 .day.presenza { background: var(--pres-soft); color: var(--pres); opacity: 1; font-weight: 800; }
+.day.trasferta, .day.estero { background: var(--trip-soft); color: var(--trip); opacity: 1; font-weight: 800; }
+.day.estero::after { content: ""; position: absolute; bottom: 5px; left: 50%; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: currentColor; }
 .day.today { box-shadow: inset 0 0 0 2px var(--fg); }
 .day.sel { box-shadow: inset 0 0 0 2px var(--muted); }
 .day:active { transform: scale(.92); }
@@ -127,6 +152,8 @@ h1 { font: 800 34px/1.05 var(--display); margin: 4px 0 0; letter-spacing: -.02em
 .editor button.s { color: var(--smart); } .editor button.p { color: var(--pres); } .editor button.x { color: var(--muted); }
 .editor button.s.on { background: var(--smart); color: var(--on-accent); }
 .editor button.p.on { background: var(--pres); color: var(--on-accent); }
+.editor button.t { color: var(--trip); }
+.editor button.t.on { background: var(--trip); color: var(--on-accent); }
 
 footer { display: flex; justify-content: center; gap: 18px; font-size: 13px; color: var(--muted); }
 footer button { color: var(--muted); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
@@ -162,6 +189,17 @@ footer button { color: var(--muted); font-weight: 600; text-decoration: underlin
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h1.5M13.5 7H15M9 11h1.5M13.5 11H15M10.5 21v-4h3v4"/></svg>
       <div><div class="name">Presenza</div><div class="hint" id="hintPres">In ufficio</div></div>
     </button>
+    <div class="trip" id="trip">
+      <button class="trip-btn" id="btnTrip" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
+        <span class="name">Trasferta</span>
+        <span class="hint" id="hintTrip">Fuori sede</span>
+      </button>
+      <div class="trip-kind" id="tripKind" role="group" aria-label="Tipo di trasferta" hidden>
+        <button data-kind="trasferta" aria-pressed="false">Italia</button>
+        <button data-kind="estero" aria-pressed="false">Estero</button>
+      </div>
+    </div>
   </section>
 
   <section class="summary" aria-label="Riepilogo del mese">
@@ -169,7 +207,8 @@ footer button { color: var(--muted); font-weight: 600; text-decoration: underlin
       <span class="lbl" id="sumTitle">Questo mese</span>
       <span class="legend"><span><i class="dot s"></i><b id="cntS">0</b> smart</span><span><i class="dot p"></i><b id="cntP">0</b> presenza</span></span>
     </div>
-    <div class="bar"><span class="s" id="barS" style="width:0"></span><span class="p" id="barP" style="width:0"></span></div>
+    <div class="bar"><span class="s" id="barS" style="width:0"></span><span class="p" id="barP" style="width:0"></span><span class="t" id="barT" style="width:0"></span></div>
+    <div class="trip-sum" id="tripSum" hidden></div>
   </section>
 
   <section class="cal" aria-label="Calendario">
@@ -185,6 +224,8 @@ footer button { color: var(--muted); font-weight: 600; text-decoration: underlin
       <span class="when" id="editWhen"></span>
       <button class="s" data-set="smart">Smart</button>
       <button class="p" data-set="presenza">Presenza</button>
+      <button class="t" data-set="trasferta">Trasf. Italia</button>
+      <button class="t" data-set="estero">Trasf. estero</button>
       <button class="x" data-set="">Cancella</button>
     </div>
   </section>
@@ -208,6 +249,10 @@ const pad = n => String(n).padStart(2, "0");
 const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const fmtLong = d => d.toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" });
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+const TRIP = ["trasferta", "estero"];
+const LABEL = { smart: "smart", presenza: "presenza", trasferta: "trasferta in Italia", estero: "trasferta all'estero" };
+const TOAST = { smart: "Oggi: smart working", presenza: "Oggi: in presenza", trasferta: "Oggi: trasferta in Italia", estero: "Oggi: trasferta all'estero" };
 
 let now = new Date();
 let view = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -243,6 +288,16 @@ function renderToday() {
     $(id).setAttribute("aria-pressed", on);
     $(hint).textContent = on ? "Registrato oggi" : def;
   }
+  const trip = TRIP.includes(m);
+  $("trip").classList.toggle("on", trip);
+  $("btnTrip").setAttribute("aria-pressed", trip);
+  $("hintTrip").hidden = trip;
+  $("tripKind").hidden = !trip;
+  $("tripKind").querySelectorAll("button").forEach(b => {
+    const on = b.dataset.kind === m;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", on);
+  });
 }
 
 function renderMonth() {
@@ -258,10 +313,10 @@ function renderMonth() {
 
   const days = new Date(y, mo + 1, 0).getDate();
   const todayKey = iso(now);
-  let s = 0, p = 0;
+  let s = 0, p = 0, t = 0, e = 0;
   for (let d = 1; d <= days; d++) {
     const date = new Date(y, mo, d), k = iso(date), m = data[k];
-    if (m === "smart") s++; else if (m === "presenza") p++;
+    if (m === "smart") s++; else if (m === "presenza") p++; else if (m === "trasferta") t++; else if (m === "estero") e++;
     const b = document.createElement("button");
     b.className = "day";
     if (date.getDay() === 0 || date.getDay() === 6) b.classList.add("we");
@@ -269,14 +324,20 @@ function renderMonth() {
     if (k === todayKey) b.classList.add("today");
     if (k === selected) b.classList.add("sel");
     b.textContent = d;
-    b.setAttribute("aria-label", `${fmtLong(date)}${m ? ", " + m : ""}`);
+    b.setAttribute("aria-label", `${fmtLong(date)}${m ? ", " + LABEL[m] : ""}`);
     b.onclick = () => { selected = selected === k ? null : k; render(); };
     g.appendChild(b);
   }
   $("cntS").textContent = s; $("cntP").textContent = p;
-  const tot = s + p;
+  const tot = s + p + t + e;
   $("barS").style.width = tot ? (s / tot * 100) + "%" : "0";
   $("barP").style.width = tot ? (p / tot * 100) + "%" : "0";
+  $("barT").style.width = tot ? ((t + e) / tot * 100) + "%" : "0";
+  const parts = [];
+  if (t) parts.push(`<b>${t}</b> in Italia`);
+  if (e) parts.push(`<b>${e}</b> all'estero`);
+  $("tripSum").innerHTML = `<i class="dot t"></i>Trasferte: ${parts.join(" · ")}`;
+  $("tripSum").hidden = !parts.length;
 
   const ed = $("editor");
   if (selected && selected.startsWith(`${y}-${pad(mo + 1)}`)) {
@@ -289,10 +350,17 @@ function renderMonth() {
 
 function render() { renderToday(); renderMonth(); }
 
-document.querySelectorAll(".choice").forEach(btn => btn.onclick = () => {
-  const k = iso(new Date()), mode = btn.dataset.mode;
+function markToday(mode) {
+  const k = iso(new Date());
   if (data[k] === mode) { setDay(k, null); toast("Registrazione rimossa"); }
-  else { setDay(k, mode); toast(mode === "smart" ? "Oggi: smart working" : "Oggi: in presenza"); if (navigator.vibrate) navigator.vibrate(12); }
+  else { setDay(k, mode); toast(TOAST[mode]); if (navigator.vibrate) navigator.vibrate(12); }
+}
+document.querySelectorAll(".choice").forEach(btn => btn.onclick = () => markToday(btn.dataset.mode));
+// Il tasto Trasferta registra "in Italia"; se oggi è già una trasferta (di qualsiasi tipo) la toglie
+$("btnTrip").onclick = () => { const m = data[iso(new Date())]; markToday(TRIP.includes(m) ? m : "trasferta"); };
+$("tripKind").querySelectorAll("button").forEach(b => b.onclick = () => {
+  const k = iso(new Date());
+  if (data[k] !== b.dataset.kind) { setDay(k, b.dataset.kind); toast(TOAST[b.dataset.kind]); }
 });
 $("editor").querySelectorAll("button").forEach(b => b.onclick = () => {
   setDay(selected, b.dataset.set || null);
@@ -312,7 +380,7 @@ $("importFile").onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
   try {
     const obj = JSON.parse(await f.text());
-    const ok = Object.entries(obj).filter(([k, v]) => /^\d{4}-\d{2}-\d{2}$/.test(k) && (v === "smart" || v === "presenza"));
+    const ok = Object.entries(obj).filter(([k, v]) => /^\d{4}-\d{2}-\d{2}$/.test(k) && Object.hasOwn(LABEL, v));
     ok.forEach(([k, v]) => data[k] = v);
     save(); render(); toast(`Importati ${ok.length} giorni`);
   } catch (err) { toast("File non valido: serve un backup .json"); }
