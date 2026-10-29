@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: una colonna stretta da telefono — data di oggi, due grandi tasti, riepilogo del mese, calendario. */
+/* Layout: una colonna da telefono bloccata a schermo intero (niente scroll) — data di oggi, due grandi tasti, riepilogo del mese, calendario che si adatta allo spazio rimasto. */
 :root {
   --bg: #F2F3F7;
   --surface: #FFFFFF;
@@ -46,8 +46,9 @@
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
-html, body { margin: 0; min-height: 100%; }
+html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
 body {
+  position: fixed; inset: 0;
   background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body);
   padding-top: max(20px, env(safe-area-inset-top, 0px));
   padding-bottom: max(28px, env(safe-area-inset-bottom, 0px));
@@ -55,24 +56,24 @@ body {
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   -webkit-font-smoothing: antialiased;
 }
-main { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+main { height: 100%; max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: clamp(10px, 1.8dvh, 20px); }
 button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
 button:focus-visible { outline: 2px solid var(--smart); outline-offset: 3px; }
 
-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; padding-top: 8px; }
+header { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; padding-top: 4px; flex: none; }
 .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-h1 { font: 800 34px/1.05 var(--display); margin: 4px 0 0; letter-spacing: -.02em; text-wrap: balance; }
+h1 { font: 800 clamp(24px, 4dvh, 34px)/1.05 var(--display); margin: 4px 0 0; letter-spacing: -.02em; text-wrap: balance; }
 .week { font-size: 13px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex: none; }
 .choice {
-  position: relative; aspect-ratio: 1 / 1.08; max-width: 100%; border-radius: 26px; padding: 18px;
+  position: relative; height: clamp(118px, 19dvh, 190px); border-radius: 26px; padding: 18px;
   background: var(--surface); box-shadow: var(--shadow);
   display: flex; flex-direction: column; justify-content: space-between; text-align: left;
   transition: transform .15s ease, background-color .25s ease, color .25s ease;
 }
 .choice:active { transform: scale(.97); }
-.choice svg { width: 44px; height: 44px; }
+.choice svg { width: clamp(34px, 5dvh, 44px); height: clamp(34px, 5dvh, 44px); }
 .choice .name { font: 700 26px/1 var(--display); letter-spacing: -.01em; }
 .choice .hint { font-size: 12.5px; color: var(--muted); font-weight: 600; margin-top: 6px; transition: color .25s; }
 .choice[data-mode="smart"] svg { color: var(--smart); }
@@ -107,30 +108,31 @@ h1 { font: 800 34px/1.05 var(--display); margin: 4px 0 0; letter-spacing: -.02em
 .trip-kind button { padding: 7px 12px; border-radius: 9px; font-weight: 700; font-size: 13px; color: var(--on-accent); }
 .trip-kind button.on { background: var(--on-accent); color: var(--trip); }
 
-.summary { display: flex; flex-direction: column; gap: 10px; }
-.summary-row { display: flex; justify-content: space-between; align-items: baseline; font-variant-numeric: tabular-nums; }
-.summary-row .lbl { font-weight: 700; font-size: 14px; }
-.legend { display: flex; gap: 14px; font-size: 13px; color: var(--muted); font-weight: 600; }
+.summary { display: flex; flex-direction: column; gap: 8px; flex: none; }
+.legend { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2px 10px; font-size: 13px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .legend b { color: var(--fg); font-weight: 700; }
+.legend .plane { width: 13px; height: 13px; margin-right: 5px; vertical-align: -2px; color: var(--trip); }
 .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
-.dot.s { background: var(--smart); } .dot.p { background: var(--pres); } .dot.t { background: var(--trip); }
+.dot.s { background: var(--smart); } .dot.p { background: var(--pres); }
 .bar { height: 8px; border-radius: 99px; background: var(--line); display: flex; overflow: hidden; }
 .bar span { transition: width .4s ease; }
 .bar .s { background: var(--smart); } .bar .p { background: var(--pres); } .bar .t { background: var(--trip); }
-.trip-sum { font-size: 13px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
-.trip-sum b { color: var(--fg); font-weight: 700; }
 
-.cal { background: var(--surface); border-radius: 24px; padding: 16px 14px 14px; box-shadow: var(--shadow); }
-.cal-head { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 12px; }
+.cal {
+  flex: 1 1 0; min-height: 0; display: flex; flex-direction: column;
+  background: var(--surface); border-radius: 24px; padding: 12px 14px 14px; box-shadow: var(--shadow);
+}
+.cal-head { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 8px; flex: none; }
 .cal-head h2 { font: 700 19px/1 var(--display); margin: 0; text-transform: capitalize; }
 .nav { display: flex; gap: 4px; }
 .nav button { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; color: var(--muted); }
 .nav button:active { background: var(--line); }
 .nav svg { width: 18px; height: 18px; }
-.grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+/* Le righe delle settimane si dividono lo spazio rimasto (max 52px), così il calendario non fa mai scorrere la pagina */
+.grid { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: minmax(0, 52px); align-content: start; gap: 4px; }
 .dow { text-align: center; font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--muted); padding-bottom: 4px; }
 .day {
-  aspect-ratio: 1; max-width: 100%; border-radius: 12px; display: grid; place-items: center;
+  min-height: 0; border-radius: 12px; display: grid; place-items: center;
   font-weight: 600; font-size: 14px; font-variant-numeric: tabular-nums; position: relative;
 }
 .day.empty { pointer-events: none; }
@@ -138,24 +140,24 @@ h1 { font: 800 34px/1.05 var(--display); margin: 4px 0 0; letter-spacing: -.02em
 .day.smart { background: var(--smart-soft); color: var(--smart); opacity: 1; font-weight: 800; }
 .day.presenza { background: var(--pres-soft); color: var(--pres); opacity: 1; font-weight: 800; }
 .day.trasferta, .day.estero { background: var(--trip-soft); color: var(--trip); opacity: 1; font-weight: 800; }
-.day.estero::after { content: ""; position: absolute; bottom: 5px; left: 50%; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: currentColor; }
+.day.estero::after { content: ""; position: absolute; bottom: 4px; left: 50%; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: currentColor; }
 .day.today { box-shadow: inset 0 0 0 2px var(--fg); }
 .day.sel { box-shadow: inset 0 0 0 2px var(--muted); }
 .day:active { transform: scale(.92); }
 
 .editor {
-  display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 10px 10px 14px;
-  border-radius: 16px; background: var(--bg); flex-wrap: wrap;
+  display: flex; align-items: center; gap: 6px; margin-top: 10px; padding: 8px 8px 8px 12px;
+  border-radius: 16px; background: var(--bg); flex-wrap: wrap; flex: none;
 }
 .editor .when { flex: 1 1 120px; min-width: 0; font-weight: 700; font-size: 14px; }
-.editor button { padding: 8px 12px; border-radius: 11px; font-weight: 700; font-size: 13px; background: var(--surface); }
+.editor button { padding: 7px 10px; border-radius: 11px; font-weight: 700; font-size: 13px; background: var(--surface); }
 .editor button.s { color: var(--smart); } .editor button.p { color: var(--pres); } .editor button.x { color: var(--muted); }
 .editor button.s.on { background: var(--smart); color: var(--on-accent); }
 .editor button.p.on { background: var(--pres); color: var(--on-accent); }
 .editor button.t { color: var(--trip); }
 .editor button.t.on { background: var(--trip); color: var(--on-accent); }
 
-footer { display: flex; justify-content: center; gap: 18px; font-size: 13px; color: var(--muted); }
+footer { display: flex; justify-content: center; gap: 18px; flex: none; font-size: 13px; color: var(--muted); }
 footer button { color: var(--muted); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 
 .toast {
@@ -203,12 +205,12 @@ footer button { color: var(--muted); font-weight: 600; text-decoration: underlin
   </section>
 
   <section class="summary" aria-label="Riepilogo del mese">
-    <div class="summary-row">
-      <span class="lbl" id="sumTitle">Questo mese</span>
-      <span class="legend"><span><i class="dot s"></i><b id="cntS">0</b> smart</span><span><i class="dot p"></i><b id="cntP">0</b> presenza</span></span>
+    <div class="legend">
+      <span><i class="dot s"></i><b id="cntS">0</b> smart</span>
+      <span><i class="dot p"></i><b id="cntP">0</b> presenza</span>
+      <span id="cntTrip" hidden><svg class="plane" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg><span id="cntTripTxt"></span></span>
     </div>
     <div class="bar"><span class="s" id="barS" style="width:0"></span><span class="p" id="barP" style="width:0"></span><span class="t" id="barT" style="width:0"></span></div>
-    <div class="trip-sum" id="tripSum" hidden></div>
   </section>
 
   <section class="cal" aria-label="Calendario">
@@ -303,8 +305,6 @@ function renderToday() {
 function renderMonth() {
   const y = view.getFullYear(), mo = view.getMonth();
   $("monthLabel").textContent = view.toLocaleDateString("it-IT", { month: "long", year: "numeric" });
-  const isCurrent = y === now.getFullYear() && mo === now.getMonth();
-  $("sumTitle").textContent = isCurrent ? "Questo mese" : cap(view.toLocaleDateString("it-IT", { month: "long" }));
 
   const g = $("grid"); g.innerHTML = "";
   ["L", "M", "M", "G", "V", "S", "D"].forEach(l => { const e = document.createElement("div"); e.className = "dow"; e.textContent = l; g.appendChild(e); });
@@ -334,10 +334,10 @@ function renderMonth() {
   $("barP").style.width = tot ? (p / tot * 100) + "%" : "0";
   $("barT").style.width = tot ? ((t + e) / tot * 100) + "%" : "0";
   const parts = [];
-  if (t) parts.push(`<b>${t}</b> in Italia`);
-  if (e) parts.push(`<b>${e}</b> all'estero`);
-  $("tripSum").innerHTML = `<i class="dot t"></i>Trasferte: ${parts.join(" · ")}`;
-  $("tripSum").hidden = !parts.length;
+  if (t) parts.push(`<b>${t}</b> Italia`);
+  if (e) parts.push(`<b>${e}</b> estero`);
+  $("cntTripTxt").innerHTML = parts.join(" · ");
+  $("cntTrip").hidden = !parts.length;
 
   const ed = $("editor");
   if (selected && selected.startsWith(`${y}-${pad(mo + 1)}`)) {
