@@ -674,6 +674,19 @@ async function compilaFoglio(file, y, mo) {
 
   await zipSetText(wsFile, toXml(ws));
   await zipSetText(wbFile, toXml(wb));
+
+  // Formati data scritti in maiuscolo (es. "D/M/YYYY"): Excel li capisce, ma l'anteprima di iPhone/Telegram
+  // legge "D" come giorno dell'anno (1 ottobre → 274). In minuscolo valgono uguale ovunque
+  const stFile = files.find(f => f.name === "xl/styles.xml");
+  if (stFile) {
+    const st = await parse(stFile);
+    let cambiati = 0;
+    for (const nf of st.getElementsByTagNameNS(NS, "numFmt")) {
+      const code = nf.getAttribute("formatCode");
+      if (/^[DMY\/.\- ]+$/.test(code) && /[DY]/.test(code)) { nf.setAttribute("formatCode", code.toLowerCase()); cambiati++; }
+    }
+    if (cambiati) await zipSetText(stFile, toXml(st));
+  }
   const chi = `${profilo.nome} ${profilo.cognome} ${mese} ${y}`.toLowerCase().replace(/\s+/g, " ");
   return { blob: writeZip(files), name: `HG Manufacturing foglio presenze ${chi}.xlsx`, mese: `${mese} ${y}`, vuoti };
 }
