@@ -198,7 +198,7 @@ h1 { font: 800 clamp(22px, 3.4dvh, 30px)/1.05 var(--display); margin: 4px 0 0; l
 .editor button.o { color: var(--off); }
 .editor button.o.on { background: var(--off); color: var(--on-accent); }
 
-footer { display: flex; justify-content: center; gap: 18px; flex: none; font-size: 13px; color: var(--muted); }
+footer { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; flex: none; font-size: 13px; color: var(--muted); }
 footer button { color: var(--muted); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 
 /* Impostazioni: finestra modale con nome e cognome */
@@ -208,6 +208,7 @@ footer button { color: var(--muted); font-weight: 600; text-decoration: underlin
 }
 .sheet::backdrop { background: rgba(10,12,18,.45); }
 .sheet h2 { font: 700 20px/1.1 var(--display); margin: 0 0 16px; }
+.sheet p { margin: -6px 0 0; color: var(--muted); font-weight: 600; }
 .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
 .field span { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .field input {
@@ -215,6 +216,9 @@ footer button { color: var(--muted); font-weight: 600; text-decoration: underlin
   border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; width: 100%;
 }
 .field input:focus { outline: 2px solid var(--smart); outline-offset: 1px; }
+.model { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 5px 5px 5px 12px; }
+.model b { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.model button { padding: 7px 12px; border-radius: 9px; background: var(--surface); color: var(--smart); font-weight: 700; }
 .sheet-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 .sheet-actions button { padding: 10px 16px; border-radius: 12px; font-weight: 700; }
 .sheet-actions .primary { background: var(--smart); color: var(--on-accent); }
@@ -307,6 +311,8 @@ footer button { color: var(--muted); font-weight: 600; text-decoration: underlin
     <button id="exportBtn">Esporta backup</button>
     <button id="importBtn">Importa backup</button>
     <input type="file" id="importFile" accept="application/json" hidden>
+    <button id="sheetBtn">Foglio presenze</button>
+    <input type="file" id="sheetFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
   </footer>
 </main>
 <div class="toast" id="toast" role="status"></div>
@@ -316,11 +322,24 @@ footer button { color: var(--muted); font-weight: 600; text-decoration: underlin
     <h2 id="settingsTitle">Impostazioni</h2>
     <label class="field"><span>Nome</span><input id="nome" autocomplete="given-name" autocapitalize="words" spellcheck="false"></label>
     <label class="field"><span>Cognome</span><input id="cognome" autocomplete="family-name" autocapitalize="words" spellcheck="false"></label>
+    <div class="field"><span>Foglio presenze vuoto</span>
+      <div class="model"><b id="modelName"></b><button type="button" id="modelBtn"></button></div>
+      <input type="file" id="modelFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+    </div>
     <div class="sheet-actions">
       <button type="button" id="settingsCancel">Annulla</button>
       <button class="primary">Salva</button>
     </div>
   </form>
+</dialog>
+
+<dialog class="sheet" id="ready" aria-labelledby="readyTitle">
+  <h2 id="readyTitle">Foglio pronto</h2>
+  <p id="readyText"></p>
+  <div class="sheet-actions">
+    <button id="readyDownload">Scarica</button>
+    <button class="primary" id="readyShare">Condividi</button>
+  </div>
 </dialog>
 
 <script>
@@ -485,7 +504,7 @@ $("next").onclick = () => { view = new Date(view.getFullYear(), view.getMonth() 
 
 $("settingsBtn").onclick = () => {
   $("nome").value = profilo.nome; $("cognome").value = profilo.cognome;
-  $("settings").showModal();
+  renderModello(); $("settings").showModal();
 };
 $("settingsCancel").onclick = () => $("settings").close();
 // Il form è method="dialog": l'invio chiude da solo la finestra
@@ -494,12 +513,15 @@ $("settingsForm").onsubmit = () => {
   saveProfilo(); renderToday(); toast("Impostazioni salvate");
 };
 
+function download(blob, name) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
 // Il backup contiene anche il profilo; l'import lo ripristina se presente
 $("exportBtn").onclick = () => {
-  const blob = new Blob([JSON.stringify({ ...data, profilo }, null, 2)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob); a.download = `smart-presenza-${iso(new Date())}.json`;
-  document.body.appendChild(a); a.click(); a.remove();
+  download(new Blob([JSON.stringify({ ...data, profilo }, null, 2)], { type: "application/json" }), `smart-presenza-${iso(new Date())}.json`);
 };
 $("importBtn").onclick = () => $("importFile").click();
 $("importFile").onchange = async e => {
@@ -514,6 +536,210 @@ $("importFile").onchange = async e => {
   } catch (err) { toast("File non valido: serve un backup .json"); }
   e.target.value = "";
 };
+
+// --- Foglio presenze HG Manufacturing ---
+// Un .xlsx è uno zip: lo si legge e riscrive qui senza librerie, ricomprimendo solo i file modificati
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c; } return t; })();
+const crc32 = b => { let c = ~0; for (const x of b) c = CRC[(c ^ x) & 255] ^ (c >>> 8); return ~c >>> 0; };
+const pipe = async (bytes, stream) => new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer());
+
+function readZip(buf) {
+  const v = new DataView(buf), u8 = new Uint8Array(buf);
+  let e = buf.byteLength - 22;
+  while (e >= 0 && v.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error("non è uno zip");
+  const files = [];
+  for (let i = 0, n = v.getUint16(e + 10, true), p = v.getUint32(e + 16, true); i < n; i++) {
+    const nl = v.getUint16(p + 28, true), off = v.getUint32(p + 42, true), csize = v.getUint32(p + 20, true);
+    const start = off + 30 + v.getUint16(off + 26, true) + v.getUint16(off + 28, true);
+    const nameBytes = u8.slice(p + 46, p + 46 + nl);
+    files.push({
+      name: new TextDecoder().decode(nameBytes), nameBytes,
+      method: v.getUint16(p + 10, true), time: v.getUint16(p + 12, true), date: v.getUint16(p + 14, true),
+      crc: v.getUint32(p + 16, true), csize, size: v.getUint32(p + 24, true), data: u8.subarray(start, start + csize),
+    });
+    p += 46 + nl + v.getUint16(p + 30, true) + v.getUint16(p + 32, true);
+  }
+  return files;
+}
+const zipText = async f => new TextDecoder().decode(f.method === 8 ? await pipe(f.data, new DecompressionStream("deflate-raw")) : f.data);
+async function zipSetText(f, text) {
+  const bytes = new TextEncoder().encode(text);
+  f.size = bytes.length; f.crc = crc32(bytes); f.method = 8;
+  f.data = await pipe(bytes, new CompressionStream("deflate-raw")); f.csize = f.data.length;
+}
+function writeZip(files) {
+  const parts = [], cd = []; let off = 0;
+  for (const f of files) {
+    const h = new DataView(new ArrayBuffer(30)), c = new DataView(new ArrayBuffer(46));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x800, true); h.setUint16(8, f.method, true);
+    h.setUint16(10, f.time, true); h.setUint16(12, f.date, true); h.setUint32(14, f.crc, true);
+    h.setUint32(18, f.csize, true); h.setUint32(22, f.size, true); h.setUint16(26, f.nameBytes.length, true);
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x800, true); c.setUint16(10, f.method, true);
+    c.setUint16(12, f.time, true); c.setUint16(14, f.date, true); c.setUint32(16, f.crc, true);
+    c.setUint32(20, f.csize, true); c.setUint32(24, f.size, true); c.setUint16(28, f.nameBytes.length, true); c.setUint32(42, off, true);
+    parts.push(h, f.nameBytes, f.data); cd.push(c, f.nameBytes);
+    off += 30 + f.nameBytes.length + f.csize;
+  }
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+  end.setUint32(12, cd.reduce((a, b) => a + b.byteLength, 0), true); end.setUint32(16, off, true);
+  return new Blob([...parts, ...cd, end], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+
+const NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+const GIORNI = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
+// Come nell'esempio: smart senza nota, ferie/malattia con la sigla nella colonna "Malattia/Ferie" e senza orari
+const NOTA = { presenza: "lavoro in presenza", trasferta: "trasferta Italia", estero: "trasferta estera" };
+const SIGLA = { ferie: "F", malattia: "M" };
+const colNum = ref => [...ref.match(/^[A-Z]+/)[0]].reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0);
+const toXml = doc => { const x = new XMLSerializer().serializeToString(doc); return x.startsWith("<?xml") ? x : '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + x; };
+
+function sheetCells(doc) {
+  const sd = doc.getElementsByTagNameNS(NS, "sheetData")[0];
+  const rows = new Map([...sd.children].map(r => [+r.getAttribute("r"), r]));
+  const el = (tag, text) => { const e = doc.createElementNS(NS, tag); if (text != null) e.textContent = text; return e; };
+  const cell = ref => {
+    const r = +ref.match(/\d+$/)[0];
+    let row = rows.get(r);
+    if (!row) {
+      row = el("row"); row.setAttribute("r", r);
+      sd.insertBefore(row, [...sd.children].find(x => +x.getAttribute("r") > r) || null); rows.set(r, row);
+    }
+    let c = [...row.children].find(x => x.getAttribute("r") === ref);
+    if (!c) {
+      c = el("c"); c.setAttribute("r", ref);
+      // Una cella nuova prende lo stile della stessa colonna di una riga dei giorni
+      const twin = rows.get(14) && [...rows.get(14).children].find(x => colNum(x.getAttribute("r")) === colNum(ref));
+      if (r >= 13 && r <= 43 && twin?.getAttribute("s")) c.setAttribute("s", twin.getAttribute("s"));
+      row.insertBefore(c, [...row.children].find(x => colNum(x.getAttribute("r")) > colNum(ref)) || null);
+    }
+    return c;
+  };
+  const num = ref => parseFloat([...cell(ref).children].find(k => k.localName === "v")?.textContent);
+  // Scrive un valore lasciando la formula, se c'è (in quel caso il valore è solo quello mostrato prima del ricalcolo)
+  const set = (ref, v) => {
+    const c = cell(ref), f = [...c.children].find(k => k.localName === "f");
+    [...c.children].forEach(k => k !== f && k.remove());
+    if (v == null || v === "") {
+      if (f) { c.setAttribute("t", "str"); c.appendChild(el("v", "")); } else c.removeAttribute("t");
+    } else if (typeof v === "number") { c.removeAttribute("t"); c.appendChild(el("v", String(v))); }
+    else if (f) { c.setAttribute("t", "str"); c.appendChild(el("v", v)); }
+    else { c.setAttribute("t", "inlineStr"); const is = el("is"); is.appendChild(el("t", v)); c.appendChild(is); }
+  };
+  return { num, set };
+}
+
+async function compilaFoglio(file, y, mo) {
+  const files = readZip(await file.arrayBuffer());
+  const wsFile = files.find(f => f.name === "xl/worksheets/sheet1.xml") || files.find(f => /^xl\/worksheets\/[^/]+\.xml$/.test(f.name));
+  const wbFile = files.find(f => f.name === "xl/workbook.xml");
+  if (!wsFile || !wbFile) throw new Error("non è un foglio Excel");
+  const parse = async f => new DOMParser().parseFromString(await zipText(f), "application/xml");
+  const ws = await parse(wsFile), wb = await parse(wbFile);
+  const { num, set } = sheetCells(ws);
+
+  // Orari presi dal foglio stesso (Mattino/Pomeriggio dalle-alle), con 9-13 e 14-18 se mancano
+  let orari = ["F8", "H8", "F9", "H9"].map(num);
+  if (orari.some(isNaN)) orari = [9 / 24, 13 / 24, 14 / 24, 18 / 24];
+  const ore = (orari[1] - orari[0]) + (orari[3] - orari[2]);
+
+  const mese = new Date(y, mo, 1).toLocaleDateString("it-IT", { month: "long" });
+  const base = (Date.UTC(y, mo, 1) - Date.UTC(1899, 11, 30)) / 864e5; // data in formato Excel
+  set("C5", profilo.cognome); set("F5", profilo.nome);
+  set("C6", cap(mese)); set("E6", y); set("B12", base);
+
+  const days = new Date(y, mo + 1, 0).getDate();
+  let presenze = 0, malattia = 0, ferie = 0, trasferte = 0, vuoti = 0;
+  for (let i = 0; i < 31; i++) {
+    const r = 13 + i, date = new Date(y, mo, 1 + i), m = i < days ? data[iso(date)] : undefined;
+    const lavoro = !!m && !OFF.includes(m);
+    set("A" + r, base + i);
+    set("B" + r, GIORNI[(date.getDay() + 6) % 7]);
+    ["C", "D", "E", "F"].forEach((col, j) => set(col + r, lavoro ? orari[j] : null));
+    set("I" + r, SIGLA[m]);
+    set("K" + r, lavoro ? ore : null);
+    set("O" + r, NOTA[m]);
+    if (lavoro) presenze++;
+    if (m === "malattia") malattia++;
+    if (m === "ferie") ferie++;
+    if (TRIP.includes(m)) trasferte++;
+    if (i < days && !m && date.getDay() % 6 !== 0) vuoti++;
+  }
+  set("D45", presenze); set("G45", malattia); set("G46", ferie); set("K46", trasferte);
+
+  // Excel ricalcola le formule all'apertura
+  const calc = wb.getElementsByTagNameNS(NS, "calcPr")[0];
+  if (calc) calc.setAttribute("fullCalcOnLoad", "1");
+
+  await zipSetText(wsFile, toXml(ws));
+  await zipSetText(wbFile, toXml(wb));
+  const chi = `${profilo.nome} ${profilo.cognome} ${mese} ${y}`.toLowerCase().replace(/\s+/g, " ");
+  return { blob: writeZip(files), name: `HG Manufacturing foglio presenze ${chi}.xlsx`, mese: `${mese} ${y}`, vuoti };
+}
+
+// Il foglio vuoto si sceglie una volta sola: l'app ne tiene una copia (il browser non può leggere da File da solo)
+const MODEL_KEY = "smart-presenza-modello";
+let modello = null; // { name, b64 }
+try { modello = JSON.parse(localStorage.getItem(MODEL_KEY)); } catch (e) {}
+const toB64 = u8 => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode(...u8.subarray(i, i + 0x8000)); return btoa(s); };
+const fromB64 = b => Uint8Array.from(atob(b), c => c.charCodeAt(0));
+function salvaModello(name, bytes) {
+  modello = { name, b64: toB64(bytes) };
+  try { localStorage.setItem(MODEL_KEY, JSON.stringify(modello)); } catch (e) {}
+}
+function renderModello() {
+  $("modelName").textContent = modello ? modello.name : "Nessuno";
+  $("modelBtn").textContent = modello ? "Cambia" : "Scegli";
+}
+$("modelBtn").onclick = () => $("modelFile").click();
+// Dalle impostazioni il foglio si salva soltanto, dopo aver controllato che si riesca a compilarlo
+$("modelFile").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  e.target.value = "";
+  const bytes = new Uint8Array(await f.arrayBuffer());
+  try { await compilaFoglio(new Blob([bytes]), view.getFullYear(), view.getMonth()); }
+  catch (err) { toast("File non valido: serve il foglio .xlsx"); return; }
+  salvaModello(f.name, bytes); renderModello(); toast("Foglio vuoto salvato");
+};
+
+const preparaFoglio = async blob => {
+  try { return await compilaFoglio(blob, view.getFullYear(), view.getMonth()); }
+  catch (err) { toast("File non valido: serve il foglio .xlsx"); return null; }
+};
+// Compila il mese mostrato nel calendario; la prima volta chiede il foglio vuoto
+$("sheetBtn").onclick = async () => {
+  if (!profilo.nome || !profilo.cognome) { toast("Prima inserisci nome e cognome"); $("settingsBtn").click(); return; }
+  if (!modello) { $("sheetFile").click(); return; }
+  const out = await preparaFoglio(new Blob([fromB64(modello.b64)]));
+  if (out) consegna(out);
+};
+$("sheetFile").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  e.target.value = "";
+  const bytes = new Uint8Array(await f.arrayBuffer());
+  const out = await preparaFoglio(new Blob([bytes]));
+  if (out) { salvaModello(f.name, bytes); consegna(out); }
+};
+// Il foglio compilato si invia dal menu Condividi (es. Telegram); dove non si può, si scarica
+let pronto = null;
+const condividi = async file => {
+  try { await navigator.share({ files: [file] }); }
+  catch (err) { if (err.name !== "AbortError") download(file, file.name); }
+};
+async function consegna(out) {
+  const file = new File([out.blob], out.name, { type: out.blob.type });
+  const msg = out.vuoti ? `Foglio di ${out.mese}: ${out.vuoti} giorni feriali vuoti` : `Foglio di ${out.mese} pronto`;
+  if (!navigator.canShare?.({ files: [file] })) { download(file, file.name); toast(msg); return; }
+  try { await navigator.share({ files: [file] }); toast(msg); }
+  catch (err) {
+    if (err.name === "AbortError") return;
+    // Su iPhone il tocco iniziale "scade" durante la compilazione e la condivisione viene bloccata: serve un altro tocco
+    pronto = file; $("readyText").textContent = msg; $("ready").showModal();
+  }
+}
+$("readyShare").onclick = () => { $("ready").close(); condividi(pronto); };
+$("readyDownload").onclick = () => { $("ready").close(); download(pronto, pronto.name); };
 
 // Ricarica quando l'app torna in primo piano (es. il giorno dopo)
 document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
