@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: una colonna da telefono bloccata a schermo intero (niente scroll) — data di oggi, due grandi tasti, riepilogo del mese, calendario che si adatta allo spazio rimasto. */
+/* Layout: una colonna da telefono bloccata a schermo intero (niente scroll) — giorno su cui si lavora (oggi o quello toccato nel calendario), due grandi tasti, riepilogo del mese, calendario che si adatta allo spazio rimasto. */
 :root {
   --bg: #F2F3F7;
   --surface: #FFFFFF;
@@ -59,12 +59,16 @@ body {
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   -webkit-font-smoothing: antialiased;
 }
-main { height: 100%; max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: clamp(8px, 1.4dvh, 16px); }
+main { height: 100%; max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: clamp(10px, 1.8dvh, 20px); }
 button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
 button:focus-visible { outline: 2px solid var(--smart); outline-offset: 3px; }
 
 header { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; padding-top: 4px; flex: none; }
 .head-main { min-width: 0; }
+/* Quando si sta modificando un altro giorno, al posto di "Oggi" compare il tasto per tornarci */
+.back { display: flex; align-items: center; gap: 2px; margin: -6px 0 -6px -8px; padding: 6px 8px; border-radius: 10px; color: var(--smart); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.back svg { width: 14px; height: 14px; }
+.back:active { background: var(--line); }
 .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 h1 { font: 800 clamp(22px, 3.4dvh, 30px)/1.05 var(--display); margin: 4px 0 0; letter-spacing: -.02em; text-wrap: balance; }
 .week { font-size: 13px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -78,7 +82,7 @@ h1 { font: 800 clamp(22px, 3.4dvh, 30px)/1.05 var(--display); margin: 4px 0 0; l
 .choice[data-mode="smart"] { --c: var(--smart); --c-soft: var(--smart-soft); }
 .choice[data-mode="presenza"] { --c: var(--pres); --c-soft: var(--pres-soft); }
 .choice {
-  position: relative; overflow: hidden; height: clamp(96px, 14.5dvh, 150px); border-radius: 24px; padding: 12px;
+  position: relative; overflow: hidden; height: clamp(104px, 17dvh, 176px); border-radius: 24px; padding: 12px;
   background: linear-gradient(165deg, var(--surface) 45%, color-mix(in srgb, var(--c) 9%, var(--surface)));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 14%, transparent), var(--shadow);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(6px, 1.1dvh, 10px);
@@ -94,12 +98,12 @@ h1 { font: 800 clamp(22px, 3.4dvh, 30px)/1.05 var(--display); margin: 4px 0 0; l
 .choice > * { position: relative; }
 .choice:active { transform: scale(.97); }
 .choice .badge {
-  width: clamp(40px, 6dvh, 56px); height: clamp(40px, 6dvh, 56px); border-radius: 50%;
+  width: clamp(42px, 6.6dvh, 62px); height: clamp(42px, 6.6dvh, 62px); border-radius: 50%;
   display: grid; place-items: center; background: var(--c-soft); color: var(--c);
   transition: background-color .3s ease, color .3s ease, transform .35s cubic-bezier(.3,1.6,.5,1);
 }
 .choice .badge svg { width: 55%; height: 55%; }
-.choice .name { font: 700 clamp(18px, 2.6dvh, 22px)/1 var(--display); letter-spacing: -.01em; }
+.choice .name { font: 700 clamp(18px, 2.8dvh, 24px)/1 var(--display); letter-spacing: -.01em; }
 .choice.on { color: var(--on-accent); box-shadow: 0 12px 28px -10px color-mix(in srgb, var(--c) 70%, transparent), var(--shadow); }
 .choice.on::before { opacity: 1; }
 .choice.on .badge { background: color-mix(in srgb, var(--on-accent) 20%, transparent); color: var(--on-accent); transform: scale(1.06); }
@@ -128,7 +132,7 @@ h1 { font: 800 clamp(22px, 3.4dvh, 30px)/1.05 var(--display); margin: 4px 0 0; l
   background: radial-gradient(120% 140% at 10% 0%, rgba(255,255,255,.22), transparent 55%), linear-gradient(155deg, var(--c), color-mix(in srgb, var(--c) 78%, #000));
   box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--c) 70%, transparent), var(--shadow);
 }
-.pill-btn { flex: 1; min-width: 0; min-height: 40px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 0 6px; transition: transform .15s ease; }
+.pill-btn { flex: 1; min-width: 0; min-height: clamp(40px, 5.6dvh, 50px); display: flex; align-items: center; justify-content: center; gap: 10px; padding: 0 6px; transition: transform .15s ease; }
 .pill-btn:active { transform: scale(.98); }
 .pill-btn .badge { width: 30px; height: 30px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--c-soft); color: var(--c); transition: background-color .3s ease, color .3s ease; }
 .pill-btn .badge svg { width: 17px; height: 17px; }
@@ -136,7 +140,7 @@ h1 { font: 800 clamp(22px, 3.4dvh, 30px)/1.05 var(--display); margin: 4px 0 0; l
 .pill.mini .name { display: none; }
 .pill.on .pill-btn .badge { background: color-mix(in srgb, var(--on-accent) 20%, transparent); color: var(--on-accent); }
 .kind { flex: none; display: flex; padding: 3px; border-radius: 12px; background: var(--bg); }
-.kind button { padding: 6px 10px; border-radius: 9px; font-weight: 700; font-size: 13px; color: var(--c); }
+.kind button { padding: clamp(6px, 1dvh, 9px) 11px; border-radius: 9px; font-weight: 700; font-size: 13px; color: var(--c); }
 .pill.on .kind { background: color-mix(in srgb, var(--on-accent) 22%, transparent); }
 .pill.on .kind button { color: var(--on-accent); }
 .pill.on .kind button.on { background: var(--on-accent); color: var(--c); }
@@ -153,7 +157,7 @@ h1 { font: 800 clamp(22px, 3.4dvh, 30px)/1.05 var(--display); margin: 4px 0 0; l
 
 .cal {
   flex: 1 1 0; min-height: 0; display: flex; flex-direction: column;
-  background: var(--surface); border-radius: 24px; padding: 12px 14px 14px; box-shadow: var(--shadow);
+  background: var(--surface); border-radius: 24px; padding: 14px 14px 16px; box-shadow: var(--shadow);
 }
 .cal-head { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 8px; flex: none; }
 .cal-head h2 { font: 700 19px/1 var(--display); margin: 0; text-transform: capitalize; }
@@ -161,12 +165,12 @@ h1 { font: 800 clamp(22px, 3.4dvh, 30px)/1.05 var(--display); margin: 4px 0 0; l
 .nav button { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; color: var(--muted); }
 .nav button:active { background: var(--line); }
 .nav svg { width: 18px; height: 18px; }
-/* Le righe delle settimane si dividono lo spazio rimasto (max 52px), così il calendario non fa mai scorrere la pagina */
-.grid { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto; grid-auto-rows: minmax(0, 52px); align-content: start; gap: 4px; }
+/* Le righe delle settimane si dividono lo spazio rimasto (max 60px), così il calendario non fa mai scorrere la pagina */
+.grid { flex: 1 1 0; min-height: 0; display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto; grid-auto-rows: minmax(0, 60px); align-content: start; gap: 5px; }
 .dow { text-align: center; font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--muted); padding-bottom: 4px; }
 .day {
   min-height: 0; border-radius: 12px; display: grid; place-items: center;
-  font-weight: 600; font-size: 14px; font-variant-numeric: tabular-nums; position: relative;
+  font-weight: 600; font-size: 15px; font-variant-numeric: tabular-nums; position: relative;
 }
 .day.empty { pointer-events: none; }
 .day.we { color: var(--muted); opacity: .55; }
@@ -175,28 +179,10 @@ h1 { font: 800 clamp(22px, 3.4dvh, 30px)/1.05 var(--display); margin: 4px 0 0; l
 .day.trasferta, .day.estero { background: var(--trip-soft); color: var(--trip); opacity: 1; font-weight: 800; }
 .day.ferie, .day.malattia { background: var(--off-soft); color: var(--off); opacity: 1; font-weight: 800; }
 .day.estero::after, .day.malattia::after { content: ""; position: absolute; bottom: 4px; left: 50%; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: currentColor; }
-.day.today { box-shadow: inset 0 0 0 2px var(--fg); }
-.day.sel { box-shadow: inset 0 0 0 2px var(--muted); }
+.day.today { box-shadow: inset 0 0 0 1.5px var(--muted); }
+/* Il giorno su cui agiscono i tasti in alto (oggi, se non se n'è toccato un altro) */
+.day.sel { box-shadow: inset 0 0 0 2px var(--fg); }
 .day:active { transform: scale(.92); }
-
-/* Barra di modifica sempre presente sotto il calendario: occupa uno spazio fisso, così niente si sposta quando tocchi un giorno */
-.editor {
-  flex: none; display: flex; align-items: center; gap: 4px; margin-top: 12px; padding: 5px 5px 5px 12px;
-  border-radius: 14px; background: var(--bg);
-}
-.editor .when { flex: 1; min-width: 0; line-height: 1.2; }
-.editor .when b { display: block; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.editor .when span { display: block; font-size: 11px; font-weight: 600; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.editor button { flex: none; width: 36px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--surface); transition: opacity .2s; }
-.editor button svg { width: 20px; height: 20px; }
-.editor button:disabled { opacity: .35; cursor: default; }
-.editor button.s { color: var(--smart); } .editor button.p { color: var(--pres); }
-.editor button.s.on { background: var(--smart); color: var(--on-accent); }
-.editor button.p.on { background: var(--pres); color: var(--on-accent); }
-.editor button.t { color: var(--trip); }
-.editor button.t.on { background: var(--trip); color: var(--on-accent); }
-.editor button.o { color: var(--off); }
-.editor button.o.on { background: var(--off); color: var(--on-accent); }
 
 footer { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; flex: none; font-size: 13px; color: var(--muted); }
 footer button { color: var(--muted); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
@@ -238,6 +224,7 @@ footer button { color: var(--muted); font-weight: 600; text-decoration: underlin
   <header>
     <div class="head-main">
       <div class="eyebrow" id="hello">Oggi</div>
+      <button class="back" id="backToday" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Torna a oggi</button>
       <h1 id="today"></h1>
     </div>
     <div class="head-side">
@@ -246,7 +233,7 @@ footer button { color: var(--muted); font-weight: 600; text-decoration: underlin
     </div>
   </header>
 
-  <section class="choices" aria-label="Modalità di oggi">
+  <section class="choices" aria-label="Modalità del giorno">
     <button class="choice" id="btnSmart" data-mode="smart" aria-pressed="false">
       <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
       <span class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><rect x="9" y="13" width="6" height="4" rx="1"/></svg></span>
@@ -296,15 +283,6 @@ footer button { color: var(--muted); font-weight: 600; text-decoration: underlin
       </div>
     </div>
     <div class="grid" id="grid"></div>
-    <div class="editor" id="editor" role="group" aria-label="Modifica giorno">
-      <span class="when"><span id="editDow">Scegli</span><b id="editWhen">un giorno</b></span>
-      <button class="s" data-set="smart" aria-label="Smart" title="Smart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><rect x="9" y="13" width="6" height="4" rx="1"/></svg></button>
-      <button class="p" data-set="presenza" aria-label="Presenza" title="Presenza"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h1.5M13.5 7H15M9 11h1.5M13.5 11H15M10.5 21v-4h3v4"/></svg></button>
-      <button class="t" data-set="trasferta" aria-label="Trasferta in Italia" title="Trasferta in Italia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17H3.5a.5.5 0 0 1-.5-.5V13a2 2 0 0 1 1.4-1.9L6 10.5l2.3-3.6A2 2 0 0 1 10 6h4.6a2 2 0 0 1 1.6.8l2.8 3.7 1.6.5A2 2 0 0 1 22 13v3.5a.5.5 0 0 1-.5.5H19"/><path d="M9 17h6M6 10.5h13M12.5 6v4.5"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg></button>
-      <button class="t" data-set="estero" aria-label="Trasferta all'estero" title="Trasferta all'estero"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg></button>
-      <button class="o" data-set="ferie" aria-label="Ferie" title="Ferie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6L6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg></button>
-      <button class="o" data-set="malattia" aria-label="Malattia" title="Malattia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 14.76V4.5a2 2 0 0 0-4 0v10.26a4 4 0 1 0 4 0z"/><path d="M12 11v6"/></svg></button>
-    </div>
   </section>
 
   <footer>
@@ -363,11 +341,11 @@ const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 const TRIP = ["trasferta", "estero"];
 const OFF = ["ferie", "malattia"];
 const LABEL = { smart: "smart", presenza: "presenza", trasferta: "trasferta in Italia", estero: "trasferta all'estero", ferie: "ferie", malattia: "malattia" };
-const TOAST = { smart: "Oggi: smart working", presenza: "Oggi: in presenza", trasferta: "Oggi: trasferta in Italia", estero: "Oggi: trasferta all'estero", ferie: "Oggi: ferie", malattia: "Oggi: malattia" };
+const TOAST = { smart: "smart working", presenza: "in presenza", trasferta: "trasferta in Italia", estero: "trasferta all'estero", ferie: "ferie", malattia: "malattia" };
 
 let now = new Date();
 let view = new Date(now.getFullYear(), now.getMonth(), 1);
-let selected = null;
+let selected = null; // giorno toccato nel calendario; null = oggi
 let otherOpen = false; // "Altro" aperto senza ancora aver scelto ferie o malattia
 
 function isoWeek(d) {
@@ -384,6 +362,11 @@ function toast(msg) {
   clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 1600);
 }
 
+const parseIso = k => { const [y, m, d] = k.split("-").map(Number); return new Date(y, m - 1, d); };
+// Il giorno su cui agiscono i tasti in alto
+const targetKey = () => selected || iso(new Date());
+const dayName = k => k === iso(new Date()) ? "Oggi" : cap(parseIso(k).toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" }));
+
 function setDay(key, mode) {
   if (mode) data[key] = mode; else delete data[key];
   save(); render();
@@ -391,11 +374,13 @@ function setDay(key, mode) {
 
 function renderToday() {
   now = new Date();
-  const k = iso(now), m = data[k];
+  const k = targetKey(), d = parseIso(k), m = data[k], isToday = !selected;
   const nome = [profilo.nome, profilo.cognome].filter(Boolean).join(" ");
   $("hello").textContent = nome ? `Oggi · ${nome}` : "Oggi";
-  $("today").textContent = cap(fmtLong(now));
-  $("week").textContent = `Settimana ${isoWeek(now)}`;
+  $("hello").hidden = !isToday;
+  $("backToday").hidden = isToday;
+  $("today").textContent = cap(fmtLong(d)) + (d.getFullYear() !== now.getFullYear() ? ` ${d.getFullYear()}` : "");
+  $("week").textContent = `Settimana ${isoWeek(d)}`;
   for (const [id, mode] of [["btnSmart", "smart"], ["btnPres", "presenza"]]) {
     const on = m === mode;
     $(id).classList.toggle("on", on);
@@ -430,7 +415,7 @@ function renderMonth() {
   for (let i = 0; i < offset; i++) { const e = document.createElement("div"); e.className = "day empty"; g.appendChild(e); }
 
   const days = new Date(y, mo + 1, 0).getDate();
-  const todayKey = iso(now);
+  const todayKey = iso(now), target = targetKey();
   const cnt = { smart: 0, presenza: 0, trasferta: 0, estero: 0, ferie: 0, malattia: 0 };
   for (let d = 1; d <= days; d++) {
     const date = new Date(y, mo, d), k = iso(date), m = data[k];
@@ -440,10 +425,11 @@ function renderMonth() {
     if (date.getDay() === 0 || date.getDay() === 6) b.classList.add("we");
     if (m) b.classList.add(m);
     if (k === todayKey) b.classList.add("today");
-    if (k === selected) b.classList.add("sel");
+    if (k === target) b.classList.add("sel");
     b.textContent = d;
     b.setAttribute("aria-label", `${fmtLong(date)}${m ? ", " + LABEL[m] : ""}`);
-    b.onclick = () => { selected = selected === k ? null : k; render(); };
+    // Toccare un giorno lo rende quello su cui agiscono i tasti in alto; ritoccarlo (o toccare oggi) torna a oggi
+    b.onclick = () => { selected = selected === k || k === todayKey ? null : k; otherOpen = false; render(); };
     g.appendChild(b);
   }
   for (const [id, m] of [["cntS", "smart"], ["cntP", "presenza"], ["cntT", "trasferta"], ["cntE", "estero"], ["cntF", "ferie"], ["cntM", "malattia"]]) $(id).textContent = cnt[m];
@@ -453,54 +439,41 @@ function renderMonth() {
   $("barP").style.width = pct(cnt.presenza);
   $("barT").style.width = pct(cnt.trasferta + cnt.estero);
   $("barO").style.width = pct(cnt.ferie + cnt.malattia);
-
-  const has = !!selected && selected.startsWith(`${y}-${pad(mo + 1)}`);
-  if (has) {
-    const [yy, mm, dd] = selected.split("-").map(Number);
-    const date = new Date(yy, mm - 1, dd);
-    $("editDow").textContent = cap(date.toLocaleDateString("it-IT", { weekday: "long" }));
-    $("editWhen").textContent = date.toLocaleDateString("it-IT", { day: "numeric", month: "short" });
-  } else { $("editDow").textContent = "Scegli"; $("editWhen").textContent = "un giorno"; }
-  $("editor").querySelectorAll("button").forEach(b => {
-    b.disabled = !has;
-    b.classList.toggle("on", has && b.dataset.set === data[selected]);
-  });
 }
 
 function render() { renderToday(); renderMonth(); }
 
-function markToday(mode) {
-  const k = iso(new Date());
+function markDay(mode) {
+  const k = targetKey();
   otherOpen = false;
-  if (data[k] === mode) { setDay(k, null); toast("Registrazione rimossa"); }
-  else { setDay(k, mode); toast(TOAST[mode]); if (navigator.vibrate) navigator.vibrate(12); }
+  if (data[k] === mode) { setDay(k, null); toast(`${dayName(k)}: registrazione rimossa`); }
+  else { setDay(k, mode); toast(`${dayName(k)}: ${TOAST[mode]}`); if (navigator.vibrate) navigator.vibrate(12); }
 }
-document.querySelectorAll(".choice").forEach(btn => btn.onclick = () => markToday(btn.dataset.mode));
-// Il tasto Trasferta registra "in Italia"; se oggi è già una trasferta (di qualsiasi tipo) la toglie
+document.querySelectorAll(".choice").forEach(btn => btn.onclick = () => markDay(btn.dataset.mode));
+// Il tasto Trasferta registra "in Italia"; se il giorno è già una trasferta (di qualsiasi tipo) la toglie
 // (se è ridotto a icona perché "Altro" è aperto, il primo tocco chiude Altro e lo riapre)
 $("btnTrip").onclick = () => {
-  const m = data[iso(new Date())];
+  const m = data[targetKey()];
   if (TRIP.includes(m) && otherOpen) { otherOpen = false; renderToday(); }
-  else markToday(TRIP.includes(m) ? m : "trasferta");
+  else markDay(TRIP.includes(m) ? m : "trasferta");
 };
-// "Altro" non ha una scelta predefinita: si apre e aspetta Ferie o Malattia; se oggi è già ferie/malattia la toglie
+// "Altro" non ha una scelta predefinita: si apre e aspetta Ferie o Malattia; se il giorno è già ferie/malattia la toglie
 $("btnOther").onclick = () => {
-  const m = data[iso(new Date())];
-  if (OFF.includes(m)) markToday(m);
+  const m = data[targetKey()];
+  if (OFF.includes(m)) markDay(m);
   else { otherOpen = !otherOpen; renderToday(); }
 };
 document.querySelectorAll(".kind button").forEach(b => b.onclick = () => {
-  const k = iso(new Date());
-  if (data[k] !== b.dataset.kind) { setDay(k, b.dataset.kind); toast(TOAST[b.dataset.kind]); if (navigator.vibrate) navigator.vibrate(12); }
+  const k = targetKey();
+  if (data[k] !== b.dataset.kind) { setDay(k, b.dataset.kind); toast(`${dayName(k)}: ${TOAST[b.dataset.kind]}`); if (navigator.vibrate) navigator.vibrate(12); }
 });
-// Toccare l'icona già attiva cancella il giorno
-$("editor").querySelectorAll("button").forEach(b => b.onclick = () => {
-  const clear = data[selected] === b.dataset.set;
-  setDay(selected, clear ? null : b.dataset.set);
-  toast(clear ? "Giorno cancellato" : "Giorno aggiornato");
-});
-$("prev").onclick = () => { view = new Date(view.getFullYear(), view.getMonth() - 1, 1); selected = null; render(); };
-$("next").onclick = () => { view = new Date(view.getFullYear(), view.getMonth() + 1, 1); selected = null; render(); };
+$("backToday").onclick = () => {
+  selected = null; otherOpen = false;
+  view = new Date(now.getFullYear(), now.getMonth(), 1);
+  render();
+};
+$("prev").onclick = () => { view = new Date(view.getFullYear(), view.getMonth() - 1, 1); selected = null; otherOpen = false; render(); };
+$("next").onclick = () => { view = new Date(view.getFullYear(), view.getMonth() + 1, 1); selected = null; otherOpen = false; render(); };
 
 $("settingsBtn").onclick = () => {
   $("nome").value = profilo.nome; $("cognome").value = profilo.cognome;
